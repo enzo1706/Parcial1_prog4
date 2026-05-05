@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProductosPage from "../pages/ProductosPage";
 import CategoriasPage from "../pages/CategoriasPage";
 import IngredientesPage from "../pages/IngredientesPage";
@@ -7,6 +7,7 @@ import Layout from "../components/Layout";
 
 export default function AppRouter() {
 return (
+    <BrowserRouter>
     <Layout>
     <Routes>
         <Route path="/productos" element={<ProductosPage />} />
@@ -15,5 +16,6 @@ return (
         <Route path="/ingredientes" element={<IngredientesPage />} />
     </Routes>
     </Layout>
+    </BrowserRouter>
 );
 }

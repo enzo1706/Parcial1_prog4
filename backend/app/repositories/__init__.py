@@ -1,0 +1,9 @@
+from .categoria_repository import CategoriaRepository
+from .producto_repository import ProductoRepository
+from .ingrediente_repository import IngredienteRepository
+
+__all__ = [
+    "CategoriaRepository",
+    "ProductoRepository",
+    "IngredienteRepository",
+]

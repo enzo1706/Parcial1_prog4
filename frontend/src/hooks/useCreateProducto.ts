@@ -13,7 +13,7 @@ const queryClient = useQueryClient();
 
 return useMutation({
     mutationFn: async (data: ProductoPayload) => {
-    const res = await api.post("/productos/", data);
+    const res = await api.post("/productos", data);
     return res.data;
     },
     onSuccess: () => {

@@ -1,50 +1,45 @@
 from typing import List, Annotated
-from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlmodel import Session, select
+from fastapi import APIRouter, Depends, Path
+from sqlmodel import Session
 
 from app.db.database import get_session
 from app.models import Ingrediente
 from app.schemas import IngredienteCreate, IngredienteRead, IngredienteUpdate
+from app.services import IngredienteService
+from app.repositories import IngredienteRepository
 
 router = APIRouter(prefix="/ingredientes", tags=["Ingredientes"])
 
 
-# GET ALL (SIN LIMIT)
-@router.get("/", response_model=List[IngredienteRead])
+def get_ingrediente_service(session: Session = Depends(get_session)) -> IngredienteService:
+    repository = IngredienteRepository(session)
+    return IngredienteService(repository)
+
+
+# GET ALL
+@router.get("", response_model=List[IngredienteRead])
 def get_ingredientes(
-    session: Session = Depends(get_session)
+    service: IngredienteService = Depends(get_ingrediente_service)
 ):
-    ingredientes = session.exec(
-        select(Ingrediente).order_by(Ingrediente.id.desc())
-    ).all()
-    return ingredientes
+    return service.get_all()
 
 
 # GET BY ID
 @router.get("/{ingrediente_id}", response_model=IngredienteRead)
 def get_ingrediente(
     ingrediente_id: Annotated[int, Path(gt=0)],
-    session: Session = Depends(get_session)
+    service: IngredienteService = Depends(get_ingrediente_service)
 ):
-    ingrediente = session.get(Ingrediente, ingrediente_id)
-    if not ingrediente:
-        raise HTTPException(status_code=404, detail="Ingrediente no encontrado")
-    return ingrediente
+    return service.get_by_id(ingrediente_id)
 
 
 # CREATE
-@router.post("/", response_model=IngredienteRead, status_code=201)
+@router.post("", response_model=IngredienteRead, status_code=201)
 def create_ingrediente(
     ingrediente: IngredienteCreate,
-    session: Session = Depends(get_session)
+    service: IngredienteService = Depends(get_ingrediente_service)
 ):
-    db_ingrediente = Ingrediente.model_validate(ingrediente)
-
-    session.add(db_ingrediente)
-    session.commit()
-    session.refresh(db_ingrediente)
-
-    return db_ingrediente
+    return service.create(ingrediente)
 
 
 # UPDATE
@@ -52,35 +47,15 @@ def create_ingrediente(
 def update_ingrediente(
     ingrediente_id: int,
     ingrediente: IngredienteUpdate,
-    session: Session = Depends(get_session)
+    service: IngredienteService = Depends(get_ingrediente_service)
 ):
-    db_ingrediente = session.get(Ingrediente, ingrediente_id)
-
-    if not db_ingrediente:
-        raise HTTPException(status_code=404, detail="Ingrediente no encontrado")
-
-    ingrediente_data = ingrediente.model_dump(exclude_unset=True)
-
-    for key, value in ingrediente_data.items():
-        setattr(db_ingrediente, key, value)
-
-    session.add(db_ingrediente)
-    session.commit()
-    session.refresh(db_ingrediente)
-
-    return db_ingrediente
+    return service.update(ingrediente_id, ingrediente)
 
 
 # DELETE
 @router.delete("/{ingrediente_id}", status_code=204)
 def delete_ingrediente(
     ingrediente_id: int,
-    session: Session = Depends(get_session)
+    service: IngredienteService = Depends(get_ingrediente_service)
 ):
-    ingrediente = session.get(Ingrediente, ingrediente_id)
-
-    if not ingrediente:
-        raise HTTPException(status_code=404, detail="Ingrediente no encontrado")
-
-    session.delete(ingrediente)
-    session.commit()
+    service.delete(ingrediente_id)

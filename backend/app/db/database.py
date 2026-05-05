@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, create_engine, Session
 from app.core.config import DATABASE_URL
-from app.models import Categoria, Producto, Ingrediente, ProductoCategoria, ProductoIngrediente
+from app.models import Categoria, Producto, Ingrediente, ProductoCategoria, ProductoIngrediente, ProductoCategoria, ProductoIngrediente
 
 engine = create_engine(
     DATABASE_URL,

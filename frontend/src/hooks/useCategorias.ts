@@ -6,7 +6,17 @@ export function useCategorias() {
     return useQuery<Categoria[]>({
     queryKey: ["categorias"],
     queryFn: async () => {
-        const res = await api.get("/categorias/");
+        const res = await api.get("/categorias");
+        return res.data;
+    },
+    });
+}
+
+export function useCategoriasPadre() {
+    return useQuery<Categoria[]>({
+    queryKey: ["categorias", "padre"],
+    queryFn: async () => {
+        const res = await api.get("/categorias/raices");
         return res.data;
     },
     });

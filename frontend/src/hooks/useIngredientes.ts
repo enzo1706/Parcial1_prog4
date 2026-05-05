@@ -5,9 +5,8 @@ export const useIngredientes = () => {
 return useQuery({
     queryKey: ["ingredientes"],
     queryFn: async () => {
-        const res = await api.get("/ingredientes/");
-    console.log("INGREDIENTES BACK:", res.data);  
-    return res.data;
+        const res = await api.get("/ingredientes");  
+        return res.data;
     },
 });
 };

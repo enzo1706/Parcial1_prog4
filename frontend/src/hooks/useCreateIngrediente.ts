@@ -6,7 +6,7 @@ const queryClient = useQueryClient();
 
 return useMutation({
     mutationFn: async (data: { nombre: string }) => {
-        const res = await api.post("/ingredientes/", data);
+        const res = await api.post("/ingredientes", data);
         return res.data;
     },
 

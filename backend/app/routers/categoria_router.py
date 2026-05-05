@@ -1,50 +1,53 @@
 from typing import List, Annotated
-from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlmodel import Session, select
+from fastapi import APIRouter, Depends, Path
+from sqlmodel import Session
 
 from app.db.database import get_session
 from app.models import Categoria
 from app.schemas import CategoriaCreate, CategoriaRead, CategoriaUpdate
+from app.services import CategoriaService
+from app.repositories import CategoriaRepository
 
 router = APIRouter(prefix="/categorias", tags=["Categorias"])
 
 
+def get_categoria_service(session: Session = Depends(get_session)) -> CategoriaService:
+    repository = CategoriaRepository(session)
+    return CategoriaService(repository)
+
+
 # GET ALL
-@router.get("/", response_model=List[CategoriaRead])
+@router.get("", response_model=List[CategoriaRead])
 def get_categorias(
-    session: Session = Depends(get_session)
+    service: CategoriaService = Depends(get_categoria_service)
 ):
-    categorias = session.exec(
-        select(Categoria).order_by(Categoria.id.desc())
-    ).all()
-    return categorias
+    return service.get_all()
 
 
 # GET BY ID
 @router.get("/{categoria_id}", response_model=CategoriaRead)
 def get_categoria(
     categoria_id: Annotated[int, Path(gt=0)],
-    session: Session = Depends(get_session)
+    service: CategoriaService = Depends(get_categoria_service)
 ):
-    categoria = session.get(Categoria, categoria_id)
-    if not categoria:
-        raise HTTPException(status_code=404, detail="Categoría no encontrada")
-    return categoria
+    return service.get_by_id(categoria_id)
+
+
+#.GET SUBOPCIONES (obtener las subcategorías de una categoría)
+@router.get("/raices", response_model=List[CategoriaRead])
+def get_categorias_raices(
+    service: CategoriaService = Depends(get_categoria_service)
+):
+    return service.get_categorias_raices()
 
 
 # CREATE
-@router.post("/", response_model=CategoriaRead, status_code=201)
+@router.post("", response_model=CategoriaRead, status_code=201)
 def create_categoria(
     categoria: CategoriaCreate,
-    session: Session = Depends(get_session)
+    service: CategoriaService = Depends(get_categoria_service)
 ):
-    db_categoria = Categoria.model_validate(categoria)
-
-    session.add(db_categoria)
-    session.commit()
-    session.refresh(db_categoria)
-
-    return db_categoria
+    return service.create(categoria)
 
 
 # UPDATE
@@ -52,35 +55,15 @@ def create_categoria(
 def update_categoria(
     categoria_id: int,
     categoria: CategoriaUpdate,
-    session: Session = Depends(get_session)
+    service: CategoriaService = Depends(get_categoria_service)
 ):
-    db_categoria = session.get(Categoria, categoria_id)
-
-    if not db_categoria:
-        raise HTTPException(status_code=404, detail="Categoría no encontrada")
-
-    categoria_data = categoria.model_dump(exclude_unset=True)
-
-    for key, value in categoria_data.items():
-        setattr(db_categoria, key, value)
-
-    session.add(db_categoria)
-    session.commit()
-    session.refresh(db_categoria)
-
-    return db_categoria
+    return service.update(categoria_id, categoria)
 
 
 # DELETE
 @router.delete("/{categoria_id}", status_code=204)
 def delete_categoria(
     categoria_id: int,
-    session: Session = Depends(get_session)
+    service: CategoriaService = Depends(get_categoria_service)
 ):
-    categoria = session.get(Categoria, categoria_id)
-
-    if not categoria:
-        raise HTTPException(status_code=404, detail="Categoría no encontrada")
-
-    session.delete(categoria)
-    session.commit()
+    service.delete(categoria_id)
